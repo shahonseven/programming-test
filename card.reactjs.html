@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Playing Cards</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <style>
+        ol {
+            counter-reset: item;
+            margin-left: 0;
+            padding-left: 0;
+        }
+        li {
+            display: block;
+            margin-bottom: .5em;
+            margin-left: 2em;
+        }
+        li::before {
+            display: inline-block;
+            content: "Player " counter(item) ": ";
+            counter-increment: item;
+        }
+    </style>
+
+    <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Playing Cards</a>
+    </nav>
+    <div class="p-5">
+        <div id="root"></div>
+    </div>
+    <script type="text/babel">
+    'use strict';
+
+    const e = React.createElement;
+
+    const totalCardsInDeck = 52;
+
+    /**
+    * Fisher–Yates shuffle algorithm
+    */
+    function shuffle(a) {
+        var j, x, i;
+        for (i = a.length - 1; i > 0; i--) {
+            j = Math.floor(Math.random() * (i + 1));
+            x = a[i];
+            a[i] = a[j];
+            a[j] = x;
+        }
+        return a;
+    }
+
+    function List(props) {
+        const players = props.players;
+        const listItems = players.map((cards, i) =>
+            <li key={i}> {cards.join(', ')}</li>
+        );
+
+        return (
+            <ol>{listItems}</ol>
+        );
+    }
+
+    class App extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+                error       : false,
+                errorMessage: '',
+                numOfPlayers: '',
+                players     : [],
+            }
+
+            this.setNumOfPlayers = this.setNumOfPlayers.bind(this);
+            this.dealCards       = this.dealCards.bind(this);
+            this.irregularity    = this.irregularity.bind(this);
+        }
+
+        setNumOfPlayers(event) {
+            this.setState({numOfPlayers: event.target.value});
+        }
+
+        irregularity(event) {
+            event.preventDefault();
+
+            this.setState({
+                error: true,
+                errorMessage: 'Irregularity occurred'
+            });
+        }
+
+        dealCards(event) {
+            event.preventDefault();
+
+            // check for null or invalid value
+            if (this.state.numOfPlayers.length == 0 || isNaN(this.state.numOfPlayers) == true) {
+                this.setState({
+                    error: true,
+                    errorMessage: 'Input value does not exist or value is invalid',
+                });
+            } else {
+                // build deck
+                let deck  = [];
+                let suits = ['C', 'D', 'H', 'S',];
+                let cards = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 'X', 'J', 'Q', 'K',];
+                
+                suits.forEach((suit) => {
+                    cards.forEach((card) => {
+                        deck.push(suit + '-' + card);
+                    });
+                });
+
+                // deal cards to players
+                let players = [];
+                for (var i = 0; i < totalCardsInDeck; i++) {
+                    for (var j = 0; j < this.state.numOfPlayers; j++) {
+                        if (deck.length) {
+                            if (players[j] == undefined) {
+                                players[j] = [];
+                            }
+                            
+                            shuffle(deck);
+                            players[j].push(deck.shift());
+                        }
+                    }
+                }
+
+                this.setState({
+                    error: false,
+                    players: players,
+                });
+            }
+        }
+
+        render() {
+            return (
+                <div>
+                    <div className="row">
+                        <div className="col-sm-8">
+                            <form onSubmit={this.dealCards}>
+                                <div className="form-group row">
+                                    <label htmlFor="numOfPlayers" className="col-sm-3 col-form-label">Number Of Players</label>
+                                    <div className="col-sm-6">
+                                        <input type="text" className="form-control" id="numOfPlayers" value={this.state.numOfPlayers} onChange={this.setNumOfPlayers} />
+                                    </div>
+                                    <div className="col-sm-3">
+                                        <button className="btn btn-primary mb-2">
+                                            Deal Cards!
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div className="col-sm-4">
+                            <form onSubmit={this.irregularity}>
+                                <button type="submit" className="btn btn-danger mb-2">Irregularity</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    {this.state.error ? 
+                        <div className="alert alert-danger" role="alert">{this.state.errorMessage}</div> 
+                    :
+                        this.state.players.length ? 
+                            <div>
+                                <h4>Results</h4>
+                                <List players={this.state.players} />
+                            </div>
+                        : null
+                    }
+                </div>
+            )
+        }
+    }
+
+    const domContainer = document.querySelector('#root');
+    ReactDOM.render(e(App), domContainer);
+    </script>
+</body>
+</html>
