@@ -1,12 +1,18 @@
+Given a SQL query that produce a search result. The query produces results in approximately 8 second.
+
+Please suggest what improvements should be done to the query in order to improve its performance.
+
+Suggestions:
+
 * Index all columns used in `where`, `order by`, and `group by` clauses
 
-* Enable MySQL query caching
-```
-query_cache_type=1
-query_cache_size = 10M
-query_cache_limit=256k
-```
-
-* Use MySQL Full-Text searches
-
 * Use `explain` to analyze and optimize MySQL queries
+
+* Use subqueries
+```
+SELECT * FROM
+(
+  SELECT * FROM jobs WHERE publish_status = 1 AND deleted IS NULL
+) Jobs
+LEFT JOIN ...
+```
